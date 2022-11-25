@@ -7,7 +7,7 @@ class Database
     private string $pass;
     private string $dbName;
     private PDO $connexion;
-    private false|PDOStatement $request;
+    private PDOStatement $request;
 
     /**
      * Constructeur de la classe Database
@@ -50,50 +50,54 @@ class Database
      * @param array $array Les paramètres SQL
      * @return bool|PDOStatement
      */
-    public function prepReq(string $query, array $array = []): bool|PDOStatement|null|PDOException
+    public function prepReq(string $query, array $array = []): bool|PDOStatement
     {
-        try
-        {
-            $this->request = $this->connexion->prepare($query);
-            $this->request->execute($array);
-            return $this->request;
-        }
-        catch (PDOException $e)
-        {
-            $existingKey = "Integrity constraint violation: 1062";
-
-            if (str_contains($e->getMessage(), $existingKey))
-            {
-                $url  = $_SERVER["HTTP_ORIGIN"];
-                $url .= "?register_same_pseudo=1";
-
-                return header('Location: ' . $url);
-            }
-            else
-            {
-                throw new PDOException( $e->getMessage() , (int)$e->getCode() );
-            }
-        }
+        $this->request = $this->connexion->prepare($query);
+        $this->request->execute($array);
+        return $this->request;
     }
 
-    /**
-     * Récupère les données
-     * @return bool|array
-     */
-    public function fetchData(): bool|array
-    {
-        return $this->request->fetchAll();
-    }
-
-    public function createCharacter (Character $character)
+    public function add (Character $character): PDOException|bool|PDOStatement|null
     {
         $params = [
-            "nom" => $character->getName()
+            "name" => $character->getName()
         ];
-        $request = $this->prepReq('INSERT INTO game_character SET name = :nom', $params);
-        var_dump($this->connexion->lastInsertId());
+        $req = $this->prepReq('INSERT INTO game_character SET name = :name', $params);
         $character->setId($this->connexion->lastInsertId());
 
-        return $request;
+        return $req;
+    }
+
+    public function exists ($name): bool
+    {
+        $params = [
+            "name" => $name
+        ];
+        $this->prepReq('SELECT COUNT(*) FROM game_character WHERE name = :name', $params);
+        $count = $this->request->fetchColumn();
+
+        if ($count === 0)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    public function getCharacterList (): array
+    {
+        $characterList = array();
+
+        $req = $this->prepReq('SELECT name FROM game_character');
+        $characters = $req->fetchAll(PDO::FETCH_OBJ);
+
+        foreach ($characters as $character)
+        {
+            $characterList[] = $character->name;
+        }
+
+        return $characterList;
     }
 }

@@ -62,6 +62,15 @@ class Character
     }
 
     /**
+     * Renvoie false si le nom du personnage créé est vide
+     * @return bool
+     */
+    public function isValidName(): bool
+    {
+        return empty($this->name);
+    }
+
+    /**
      * @return int
      */
     public function getId(): int
