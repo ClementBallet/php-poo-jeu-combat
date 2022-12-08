@@ -19,12 +19,15 @@ $database->connect();
 </head>
 <body>
 
-<form action="/" method="post">
+<form action="/?action=create-player" method="post">
     <p>
         <label>Créer un personnage :</label>
         <input type="text" name="create-player-name" value="">
     </p>
     <input type="submit" value="Créer ce personnage" name="create-player">
+</form>
+
+<form action="/?action=select-player" method="post">
     <p>
         <label for="">Sélectionner un joueur :</label>
         <select name="select-player">
@@ -57,38 +60,46 @@ function buildCharacterDropdown (Database $db): string
     return $options;
 }
 
-//$gandalf = new Character("Gandalf");
-//$database->createCharacter($gandalf);
-//var_dump($gandalf->getId());
+$player = "";
 
-fight($database);
-
-/**
- * Lance le jeu
- * @param Database $db La connexion avec la base de données
- * @return void
- */
-function fight (Database $db): void
+if (isset($_GET["action"]))
 {
-    $createdPlayerName = htmlspecialchars($_POST["create-player-name"]);
-    $player = new Character($createdPlayerName);
+    if ($_GET["action"] == "create-player")
+    {
+        $player = createCharacter($database);
+        var_dump($player);
+    }
+    else if ($_GET["action"] == "select-player")
+    {
+        selectCharacters();
+    }
+}
 
-    if (!$player->isValidName())
+function createCharacter (Database $db)
+{
+    $createdCharacterName = htmlspecialchars($_POST["create-player-name"]);
+    $character = new Character($createdCharacterName);
+
+    if (!$character->isValidName())
     {
         echo 'Le nom choisi est invalide.';
-        unset($player);
+        unset($character);
         return;
     }
 
-    if ($db->exists($player->getName()))
+    if ($db->exists($character->getName()))
     {
         echo "Ce personnage existe déjà. Merci d'en créer un autre.";
-        unset($player);
+        unset($character);
         return;
     }
 
-    $db->add($player);
+    $db->add($character);
+    return $character;
+}
 
+function selectCharacters ()
+{
     if (!empty($_POST["create-player-name"]) && !empty($_POST["select-player"]))
     {
         echo "Vous avez créé un joueur et sélectionné un joueur existant. Merci de choisir entre les 2 !";
@@ -110,8 +121,17 @@ function fight (Database $db): void
     if ($_POST["select-player"] === $_POST["select-enemy"])
     {
         echo "Vous ne pouvez pas combattre contre vous-même, voyons !";
-        return;
     }
+}
+
+/**
+ * Lance le jeu
+ * @param Database $db La connexion avec la base de données
+ * @return void
+ */
+function fight (Database $db): void
+{
+
 
     echo 'fight';
 

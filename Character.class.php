@@ -67,7 +67,7 @@ class Character
      */
     public function isValidName(): bool
     {
-        return empty($this->name);
+        return !empty($this->name);
     }
 
     /**
